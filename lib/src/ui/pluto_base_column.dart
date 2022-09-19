@@ -9,10 +9,13 @@ class PlutoBaseColumn extends PlutoStatefulWidget
 
   final double? columnTitleHeight;
 
+  final void Function()? onColumnDragCompleted;
+
   PlutoBaseColumn({
     required this.stateManager,
     required this.column,
     this.columnTitleHeight,
+    this.onColumnDragCompleted,
   }) : super(key: column.key);
 
   @override
@@ -59,11 +62,7 @@ class PlutoBaseColumnState extends PlutoStateWithChange<PlutoBaseColumn> {
           left: 0,
           right: 0,
           bottom: _showColumnFilter ? stateManager.columnFilterHeight : 0,
-          child: PlutoColumnTitle(
-            stateManager: stateManager,
-            column: widget.column,
-            height: widget.columnTitleHeight ?? stateManager.columnHeight,
-          ),
+          child: _buildPlutoColumnTitle(),
         ),
         if (_showColumnFilter)
           Positioned(
@@ -77,5 +76,22 @@ class PlutoBaseColumnState extends PlutoStateWithChange<PlutoBaseColumn> {
           ),
       ],
     );
+  }
+
+  PlutoColumnTitle _buildPlutoColumnTitle() {
+    if (widget.onColumnDragCompleted != null) {
+      return PlutoColumnTitle(
+        stateManager: stateManager,
+        column: widget.column,
+        height: widget.columnTitleHeight ?? stateManager.columnHeight,
+        onColumnDragCompleted: widget.onColumnDragCompleted,
+      );
+    } else {
+      return PlutoColumnTitle(
+        stateManager: stateManager,
+        column: widget.column,
+        height: widget.columnTitleHeight ?? stateManager.columnHeight,
+      );
+    }
   }
 }

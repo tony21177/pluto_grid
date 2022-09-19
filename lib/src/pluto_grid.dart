@@ -9,35 +9,25 @@ import 'package:pluto_grid/pluto_grid.dart';
 typedef PlutoOnLoadedEventCallback = void Function(
     PlutoGridOnLoadedEvent event);
 
-typedef PlutoOnChangedEventCallback = void Function(
-    PlutoGridOnChangedEvent event);
+typedef PlutoOnChangedEventCallback = void Function(PlutoGridOnChangedEvent event);
 
-typedef PlutoOnSelectedEventCallback = void Function(
-    PlutoGridOnSelectedEvent event);
+typedef PlutoOnSelectedEventCallback = void Function(PlutoGridOnSelectedEvent event);
 
-typedef PlutoOnSortedEventCallback = void Function(
-    PlutoGridOnSortedEvent event);
+typedef PlutoOnSortedEventCallback = void Function(PlutoGridOnSortedEvent event);
 
-typedef PlutoOnRowCheckedEventCallback = void Function(
-    PlutoGridOnRowCheckedEvent event);
+typedef PlutoOnRowCheckedEventCallback = void Function(PlutoGridOnRowCheckedEvent event);
 
-typedef PlutoOnRowDoubleTapEventCallback = void Function(
-    PlutoGridOnRowDoubleTapEvent event);
+typedef PlutoOnRowDoubleTapEventCallback = void Function(PlutoGridOnRowDoubleTapEvent event);
 
-typedef PlutoOnRowSecondaryTapEventCallback = void Function(
-    PlutoGridOnRowSecondaryTapEvent event);
+typedef PlutoOnRowSecondaryTapEventCallback = void Function(PlutoGridOnRowSecondaryTapEvent event);
 
-typedef PlutoOnRowsMovedEventCallback = void Function(
-    PlutoGridOnRowsMovedEvent event);
+typedef PlutoOnRowsMovedEventCallback = void Function(PlutoGridOnRowsMovedEvent event);
 
-typedef CreateHeaderCallBack = Widget Function(
-    PlutoGridStateManager stateManager);
+typedef CreateHeaderCallBack = Widget Function(PlutoGridStateManager stateManager);
 
-typedef CreateFooterCallBack = Widget Function(
-    PlutoGridStateManager stateManager);
+typedef CreateFooterCallBack = Widget Function(PlutoGridStateManager stateManager);
 
-typedef PlutoRowColorCallback = Color Function(
-    PlutoRowColorContext rowColorContext);
+typedef PlutoRowColorCallback = Color Function(PlutoRowColorContext rowColorContext);
 
 /// [PlutoGrid] is a widget that receives columns and rows and is expressed as a grid-type UI.
 ///
@@ -67,7 +57,10 @@ class PlutoGrid extends PlutoStatefulWidget {
     this.columnMenuDelegate,
     this.configuration,
     this.mode = PlutoGridMode.normal,
+    this.onColumnDragCompleted,
   }) : super(key: key);
+
+  final void Function()? onColumnDragCompleted;
 
   /// {@template pluto_grid_property_columns}
   /// The [PlutoColumn] column is delivered as a list and can be added or deleted after grid creation.
@@ -343,11 +336,9 @@ class PlutoGridState extends PlutoStateWithChange<PlutoGrid> {
 
   final FocusNode _gridFocusNode = FocusNode();
 
-  final LinkedScrollControllerGroup _verticalScroll =
-      LinkedScrollControllerGroup();
+  final LinkedScrollControllerGroup _verticalScroll = LinkedScrollControllerGroup();
 
-  final LinkedScrollControllerGroup _horizontalScroll =
-      LinkedScrollControllerGroup();
+  final LinkedScrollControllerGroup _horizontalScroll = LinkedScrollControllerGroup();
 
   final List<Function()> _disposeList = [];
 
@@ -527,8 +518,7 @@ class PlutoGridState extends PlutoStateWithChange<PlutoGrid> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stateManager.currentCell == null && widget.rows.isNotEmpty) {
-        final firstVisible =
-            widget.columns.firstWhereOrNull((element) => !element.hide);
+        final firstVisible = widget.columns.firstWhereOrNull((element) => !element.hide);
 
         if (firstVisible != null) {
           _stateManager.setCurrentCell(
@@ -571,14 +561,11 @@ class PlutoGridState extends PlutoStateWithChange<PlutoGrid> {
   Widget build(BuildContext context) {
     final style = _stateManager.style;
 
-    final bool showLeftFrozen =
-        _stateManager.showFrozenColumn && _stateManager.hasLeftFrozenColumns;
+    final bool showLeftFrozen = _stateManager.showFrozenColumn && _stateManager.hasLeftFrozenColumns;
 
-    final bool showRightFrozen =
-        _stateManager.showFrozenColumn && _stateManager.hasRightFrozenColumns;
+    final bool showRightFrozen = _stateManager.showFrozenColumn && _stateManager.hasRightFrozenColumns;
 
-    final bool showColumnRowDivider =
-        _stateManager.showColumnTitle || _stateManager.showColumnFilter;
+    final bool showColumnRowDivider = _stateManager.showColumnTitle || _stateManager.showColumnFilter;
 
     _stateManager.setTextDirection(Directionality.of(context));
 
@@ -599,7 +586,7 @@ class PlutoGridState extends PlutoStateWithChange<PlutoGrid> {
               ),
               LayoutId(
                 id: _StackName.bodyColumns,
-                child: PlutoBodyColumns(_stateManager),
+                child: PlutoBodyColumns(_stateManager,onColumnDragCompleted: widget.onColumnDragCompleted),
               ),
 
               /// Left columns and rows.
@@ -608,9 +595,7 @@ class PlutoGridState extends PlutoStateWithChange<PlutoGrid> {
                   id: _StackName.leftFrozenColumns,
                   child: PlutoLeftFrozenColumns(_stateManager),
                 ),
-                LayoutId(
-                    id: _StackName.leftFrozenRows,
-                    child: PlutoLeftFrozenRows(_stateManager)),
+                LayoutId(id: _StackName.leftFrozenRows, child: PlutoLeftFrozenRows(_stateManager)),
                 LayoutId(
                   id: _StackName.leftFrozenDivider,
                   child: PlutoShadowLine(
@@ -627,9 +612,7 @@ class PlutoGridState extends PlutoStateWithChange<PlutoGrid> {
                   id: _StackName.rightFrozenColumns,
                   child: PlutoRightFrozenColumns(_stateManager),
                 ),
-                LayoutId(
-                    id: _StackName.rightFrozenRows,
-                    child: PlutoRightFrozenRows(_stateManager)),
+                LayoutId(id: _StackName.rightFrozenRows, child: PlutoRightFrozenRows(_stateManager)),
                 LayoutId(
                   id: _StackName.rightFrozenDivider,
                   child: PlutoShadowLine(
@@ -707,13 +690,11 @@ class PlutoGridState extends PlutoStateWithChange<PlutoGrid> {
 class PlutoGridLayoutDelegate extends MultiChildLayoutDelegate {
   final PlutoGridStateManager _stateManager;
 
-  PlutoGridLayoutDelegate(this._stateManager)
-      : super(relayout: _stateManager.resizingChangeNotifier);
+  PlutoGridLayoutDelegate(this._stateManager) : super(relayout: _stateManager.resizingChangeNotifier);
 
   @override
   void performLayout(Size size) {
-    if (_stateManager.showFrozenColumn !=
-        _stateManager.shouldShowFrozenColumns(size.width)) {
+    if (_stateManager.showFrozenColumn != _stateManager.shouldShowFrozenColumns(size.width)) {
       _stateManager.notifyListenersOnPostFrame();
     }
 
@@ -813,9 +794,7 @@ class PlutoGridLayoutDelegate extends MultiChildLayoutDelegate {
         ),
       );
 
-      final double posX = isLTR
-          ? bodyLeftOffset
-          : size.width - bodyRightOffset - PlutoGridSettings.gridBorderWidth;
+      final double posX = isLTR ? bodyLeftOffset : size.width - bodyRightOffset - PlutoGridSettings.gridBorderWidth;
 
       positionChild(
         _StackName.leftFrozenDivider,
@@ -835,8 +814,7 @@ class PlutoGridLayoutDelegate extends MultiChildLayoutDelegate {
         BoxConstraints.loose(size),
       );
 
-      final double posX =
-          isLTR ? size.width - s.width + PlutoGridSettings.gridBorderWidth : 0;
+      final double posX = isLTR ? size.width - s.width + PlutoGridSettings.gridBorderWidth : 0;
 
       positionChild(
         _StackName.rightFrozenColumns,
@@ -861,9 +839,7 @@ class PlutoGridLayoutDelegate extends MultiChildLayoutDelegate {
         ),
       );
 
-      final double posX = isLTR
-          ? size.width - bodyRightOffset - PlutoGridSettings.gridBorderWidth
-          : bodyLeftOffset;
+      final double posX = isLTR ? size.width - bodyRightOffset - PlutoGridSettings.gridBorderWidth : bodyLeftOffset;
 
       positionChild(
         _StackName.rightFrozenDivider,
@@ -885,8 +861,7 @@ class PlutoGridLayoutDelegate extends MultiChildLayoutDelegate {
         ),
       );
 
-      final double posX =
-          isLTR ? bodyLeftOffset : size.width - s.width - bodyRightOffset;
+      final double posX = isLTR ? bodyLeftOffset : size.width - s.width - bodyRightOffset;
 
       positionChild(
         _StackName.bodyColumns,
@@ -917,9 +892,7 @@ class PlutoGridLayoutDelegate extends MultiChildLayoutDelegate {
 
     if (hasChild(_StackName.leftFrozenRows)) {
       final double offset = isLTR ? bodyLeftOffset : bodyRightOffset;
-      final double posX = isLTR
-          ? 0
-          : size.width - bodyRightOffset + PlutoGridSettings.gridBorderWidth;
+      final double posX = isLTR ? 0 : size.width - bodyRightOffset + PlutoGridSettings.gridBorderWidth;
 
       layoutChild(
         _StackName.leftFrozenRows,
@@ -936,9 +909,7 @@ class PlutoGridLayoutDelegate extends MultiChildLayoutDelegate {
 
     if (hasChild(_StackName.rightFrozenRows)) {
       final double offset = isLTR ? bodyRightOffset : bodyLeftOffset;
-      final double posX = isLTR
-          ? size.width - bodyRightOffset + PlutoGridSettings.gridBorderWidth
-          : 0;
+      final double posX = isLTR ? size.width - bodyRightOffset + PlutoGridSettings.gridBorderWidth : 0;
 
       layoutChild(
         _StackName.rightFrozenRows,
@@ -1219,8 +1190,7 @@ enum PlutoGridMode {
 extension PlutoGridModeExtension on PlutoGridMode? {
   bool get isNormal => this == PlutoGridMode.normal;
 
-  bool get isSelect =>
-      this == PlutoGridMode.select || this == PlutoGridMode.selectWithOneTap;
+  bool get isSelect => this == PlutoGridMode.select || this == PlutoGridMode.selectWithOneTap;
 
   bool get isSelectModeWithOneTap => this == PlutoGridMode.selectWithOneTap;
 
@@ -1242,8 +1212,7 @@ class PlutoGridSettings {
   static const double shadowLineSize = 3.0;
 
   /// Sum of frozen column division line width
-  static const double totalShadowLineWidth =
-      PlutoGridSettings.shadowLineSize * 2;
+  static const double totalShadowLineWidth = PlutoGridSettings.shadowLineSize * 2;
 
   /// Grid - padding
   static const double gridPadding = 2.0;
@@ -1251,8 +1220,7 @@ class PlutoGridSettings {
   /// Grid - border width
   static const double gridBorderWidth = 1.0;
 
-  static const double gridInnerSpacing =
-      (gridPadding * 2) + (gridBorderWidth * 2);
+  static const double gridInnerSpacing = (gridPadding * 2) + (gridBorderWidth * 2);
 
   /// Row - Default row height
   static const double rowHeight = 45.0;
@@ -1267,8 +1235,7 @@ class PlutoGridSettings {
   static const EdgeInsets cellPadding = EdgeInsets.symmetric(horizontal: 10);
 
   /// Column title - padding
-  static const EdgeInsets columnTitlePadding =
-      EdgeInsets.symmetric(horizontal: 10);
+  static const EdgeInsets columnTitlePadding = EdgeInsets.symmetric(horizontal: 10);
 
   static const EdgeInsets columnFilterPadding = EdgeInsets.all(5);
 

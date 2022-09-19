@@ -6,8 +6,11 @@ import 'package:pluto_grid/pluto_grid.dart';
 class PlutoBodyColumns extends PlutoStatefulWidget {
   final PlutoGridStateManager stateManager;
 
+  final void Function()? onColumnDragCompleted;
+
   const PlutoBodyColumns(
     this.stateManager, {
+    this.onColumnDragCompleted,
     super.key,
   });
 
@@ -69,12 +72,8 @@ class PlutoBodyColumnsState extends PlutoStateWithChange<PlutoBodyColumns> {
   }
 
   List<PlutoColumn> _getColumns() {
-    final columns = stateManager.showFrozenColumn
-        ? stateManager.bodyColumns
-        : stateManager.columns;
-    return stateManager.isLTR
-        ? columns
-        : columns.reversed.toList(growable: false);
+    final columns = stateManager.showFrozenColumn ? stateManager.bodyColumns : stateManager.columns;
+    return stateManager.isLTR ? columns : columns.reversed.toList(growable: false);
   }
 
   int _getItemCount() {
@@ -98,6 +97,7 @@ class PlutoBodyColumnsState extends PlutoStateWithChange<PlutoBodyColumns> {
     return PlutoVisibilityLayoutId(
       id: e.field,
       child: PlutoBaseColumn(
+        onColumnDragCompleted:widget.onColumnDragCompleted,
         stateManager: stateManager,
         column: e,
       ),
@@ -150,8 +150,7 @@ class MainColumnLayoutDelegate extends MultiChildLayoutDelegate {
     totalColumnsHeight = 0;
 
     if (stateManager.showColumnGroups) {
-      totalColumnsHeight =
-          stateManager.columnGroupHeight + stateManager.columnHeight;
+      totalColumnsHeight = stateManager.columnGroupHeight + stateManager.columnHeight;
     } else {
       totalColumnsHeight = stateManager.columnHeight;
     }
